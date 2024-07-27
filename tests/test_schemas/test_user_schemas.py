@@ -4,6 +4,67 @@ from pydantic import ValidationError
 from datetime import datetime
 from app.schemas.user_schemas import UserBase, UserCreate, UserUpdate, UserResponse, UserListResponse, LoginRequest
 
+# Define test data fixtures
+@pytest.fixture
+def user_base_data():
+    return {
+        "nickname": "testuser",
+        "email": "testuser@example.com",
+        "full_name": "Test User",
+        "bio": "This is a test user.",
+        "profile_picture_url": "http://example.com/profile.jpg",
+        "linkedin_profile_url": "http://linkedin.com/in/testuser",
+        "github_profile_url": "http://github.com/testuser"
+    }
+
+@pytest.fixture
+def user_create_data():
+    return {
+        "nickname": "testuser",
+        "email": "testuser@example.com",
+        "full_name": "Test User",
+        "bio": "This is a test user.",
+        "profile_picture_url": "http://example.com/profile.jpg",
+        "linkedin_profile_url": "http://linkedin.com/in/testuser",
+        "github_profile_url": "http://github.com/testuser",
+        "password": "strongpassword"
+    }
+
+@pytest.fixture
+def user_update_data():
+    return {
+        "email": "updated@example.com",
+        "full_name": "Updated User",
+        "bio": "This is an updated test user.",
+        "profile_picture_url": "http://example.com/updated_profile.jpg",
+        "linkedin_profile_url": "http://linkedin.com/in/updateduser",
+        "github_profile_url": "http://github.com/updateduser",
+        "first_name": "Updated",
+        "last_name": "User"
+    }
+
+@pytest.fixture
+def user_response_data():
+    return {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "nickname": "testuser",
+        "email": "testuser@example.com",
+        "full_name": "Test User",
+        "bio": "This is a test user.",
+        "profile_picture_url": "http://example.com/profile.jpg",
+        "linkedin_profile_url": "http://linkedin.com/in/testuser",
+        "github_profile_url": "http://github.com/testuser",
+        "created_at": datetime.now(),
+        "updated_at": datetime.now()
+    }
+
+@pytest.fixture
+def login_request_data():
+    return {
+        "email": "testuser@example.com",
+        "password": "strongpassword"
+    }
+
 # Tests for UserBase
 def test_user_base_valid(user_base_data):
     user = UserBase(**user_base_data)
@@ -67,3 +128,6 @@ def test_user_base_invalid_email(user_base_data_invalid):
     
     assert "value is not a valid email address" in str(exc_info.value)
     assert "john.doe.example.com" in str(exc_info.value)
+
+
+
