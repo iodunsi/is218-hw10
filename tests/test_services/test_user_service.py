@@ -1,5 +1,6 @@
 from builtins import range
 import pytest
+from unittest.mock import AsyncMock
 from sqlalchemy import select
 from app.dependencies import get_settings
 from app.models.user_model import User
@@ -7,24 +8,30 @@ from app.services.user_service import UserService
 
 pytestmark = pytest.mark.asyncio
 
+@pytest.fixture
+def mock_email_service():
+    mock_service = AsyncMock()
+    mock_service.send_email = AsyncMock()
+    return mock_service
+
 # Test creating a user with valid data
-async def test_create_user_with_valid_data(db_session, email_service):
+async def test_create_user_with_valid_data(db_session, mock_email_service):
     user_data = {
         "email": "valid_user@example.com",
         "password": "ValidPassword123!",
     }
-    user = await UserService.create(db_session, user_data, email_service)
+    user = await UserService.create(db_session, user_data, mock_email_service)
     assert user is not None
     assert user.email == user_data["email"]
 
 # Test creating a user with invalid data
-async def test_create_user_with_invalid_data(db_session, email_service):
+async def test_create_user_with_invalid_data(db_session, mock_email_service):
     user_data = {
         "nickname": "",  # Invalid nickname
         "email": "invalidemail",  # Invalid email
         "password": "short",  # Invalid password
     }
-    user = await UserService.create(db_session, user_data, email_service)
+    user = await UserService.create(db_session, user_data, mock_email_service)
     assert user is None
 
 # Test fetching a user by ID when the user exists
@@ -90,22 +97,22 @@ async def test_list_users_with_pagination(db_session, users_with_same_role_50_us
     assert users_page_1[0].id != users_page_2[0].id
 
 # Test registering a user with valid data
-async def test_register_user_with_valid_data(db_session, email_service):
+async def test_register_user_with_valid_data(db_session, mock_email_service):
     user_data = {
         "email": "register_valid_user@example.com",
         "password": "RegisterValid123!",
     }
-    user = await UserService.register_user(db_session, user_data, email_service)
+    user = await UserService.register_user(db_session, user_data, mock_email_service)
     assert user is not None
     assert user.email == user_data["email"]
 
 # Test attempting to register a user with invalid data
-async def test_register_user_with_invalid_data(db_session, email_service):
+async def test_register_user_with_invalid_data(db_session, mock_email_service):
     user_data = {
         "email": "registerinvalidemail",  # Invalid email
         "password": "short",  # Invalid password
     }
-    user = await UserService.register_user(db_session, user_data, email_service)
+    user = await UserService.register_user(db_session, user_data, mock_email_service)
     assert user is None
 
 # Test successful user login
@@ -156,3 +163,6 @@ async def test_unlock_user_account(db_session, locked_user):
     assert unlocked, "The account should be unlocked"
     refreshed_user = await UserService.get_by_id(db_session, locked_user.id)
     assert not refreshed_user.is_locked, "The user should no longer be locked"
+
+
+
