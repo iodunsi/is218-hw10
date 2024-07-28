@@ -13,9 +13,10 @@ Fixtures:
 - `setup_database`: Sets up and tears down the database before and after each test.
 """
 
+
 # Standard library imports
 from builtins import range
-from datetime import datetime
+from datetime import timedelta, datetime
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -48,13 +49,10 @@ AsyncSessionScoped = scoped_session(AsyncTestingSessionLocal)
 
 @pytest.fixture
 def email_service():
-    # Assuming the TemplateManager does not need any arguments for initialization
     template_manager = TemplateManager()
     email_service = EmailService(template_manager=template_manager)
     return email_service
 
-
-# this is what creates the http client for your api tests
 @pytest.fixture(scope="function")
 async def async_client(db_session):
     async with AsyncClient(app=app, base_url="http://testserver") as client:
@@ -71,15 +69,13 @@ def initialize_database():
     except Exception as e:
         pytest.fail(f"Failed to initialize the database: {str(e)}")
 
-# this function setup and tears down (drops tales) for each test function, so you have a clean database for each test.
 @pytest.fixture(scope="function", autouse=True)
 async def setup_database():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
-        # you can comment out this line during development if you are debugging a single test
-         await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 @pytest.fixture(scope="function")
@@ -180,38 +176,46 @@ async def users_with_same_role_50_users(db_session):
     await db_session.commit()
     return users
 
-@pytest.fixture
-async def admin_user(db_session: AsyncSession):
-    user = User(
-        nickname="admin_user",
-        email="admin@example.com",
-        first_name="John",
-        last_name="Doe",
-        hashed_password="securepassword",
-        role=UserRole.ADMIN,
-        is_locked=False,
-    )
+@pytest.fixture(scope="function")
+async def admin_user(db_session):
+    user_data = {
+        "nickname": "admin_user",
+        "email": "admin@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "hashed_password": hash_password("SecurePassword123!"),
+        "role": UserRole.ADMIN,
+        "is_locked": False,
+    }
+    user = User(**user_data)
     db_session.add(user)
     await db_session.commit()
     return user
 
-@pytest.fixture
-async def manager_user(db_session: AsyncSession):
-    user = User(
-        nickname="manager_john",
-        first_name="John",
-        last_name="Doe",
-        email="manager_user@example.com",
-        hashed_password="securepassword",
-        role=UserRole.MANAGER,
-        is_locked=False,
-    )
+@pytest.fixture(scope="function")
+async def manager_user(db_session):
+    user_data = {
+        "nickname": "manager_john",
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "manager_user@example.com",
+        "hashed_password": hash_password("SecurePassword123!"),
+        "role": UserRole.MANAGER,
+        "is_locked": False,
+    }
+    user = User(**user_data)
     db_session.add(user)
     await db_session.commit()
     return user
 
+@pytest.fixture(scope="function")
+async def user_token(verified_user):
+    return create_access_token(data={"sub": verified_user.email, "role": str(verified_user.role)}, expires_delta=timedelta(minutes=15))
 
-# Fixtures for common test data
+@pytest.fixture(scope="function")
+async def admin_token(admin_user):
+    return create_access_token(data={"sub": admin_user.email, "role": str(admin_user.role)}, expires_delta=timedelta(minutes=15))
+
 @pytest.fixture
 def user_base_data():
     return {
@@ -231,7 +235,6 @@ def user_base_data_invalid():
         "bio": "I am a software engineer with over 5 years of experience.",
         "profile_picture_url": "https://example.com/profile_pictures/john_doe.jpg"
     }
-
 
 @pytest.fixture
 def user_create_data(user_base_data):
