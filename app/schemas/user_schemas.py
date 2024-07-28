@@ -64,6 +64,9 @@ class UserResponse(UserBase):
     nickname: Optional[str] = Field(None, min_length=3, pattern=r'^[\w-]+$', example=generate_nickname())    
     role: UserRole = Field(default=UserRole.AUTHENTICATED, example="AUTHENTICATED")
     is_professional: Optional[bool] = Field(default=False, example=True)
+    created_at: datetime = Field(..., example=datetime.utcnow())  # Added
+    updated_at: datetime = Field(..., example=datetime.utcnow())  # Added
+    last_login_at: datetime = Field(..., example=datetime.utcnow())  # Added
 
 class LoginRequest(BaseModel):
     email: str = Field(..., example="john.doe@example.com")
@@ -85,3 +88,6 @@ class UserListResponse(BaseModel):
     total: int = Field(..., example=100)
     page: int = Field(..., example=1)
     size: int = Field(..., example=10)
+
+
+
